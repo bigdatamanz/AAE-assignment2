@@ -92,7 +92,6 @@ Only five GPS satellites were available throughout the data arc.
 Applying the skymask instantly reveals that PRNs 3 and 7 spend most of the time in non-line-of-sight (NLOS) sectors, whereas PRNs 1, 11, and 18 remain largely unobstructed.  
 This visibility classification underpins the weighting strategy in the subsequent WLS solution.
 
----
 
 ### 4.2  Positioning Accuracy
 
@@ -124,8 +123,6 @@ ing the 3-D error by ≈45 m (1.1 %) relative to pure C/N₀ weighting.
 <p align="center"><b>Fig. 4</b> RMSE comparison for four weighting strategies.</p>
 
 
----
-
 ### 4.3  Temporal Stability
 
 <p align="center">
@@ -142,7 +139,6 @@ ing the 3-D error by ≈45 m (1.1 %) relative to pure C/N₀ weighting.
 - After applying the skymask, coordinate excursions shrink progressively, especially in the east component.  
 - Velocity estimates remain centred around zero with most spikes < ±10 m s⁻¹, indicating that gross dynamical outliers are suppressed.
 
----
 
 ### 4.4  Key Findings
 
@@ -150,7 +146,6 @@ ing the 3-D error by ≈45 m (1.1 %) relative to pure C/N₀ weighting.
 2. **East-axis bias** dominates the error budget, affirming that façades on the eastern flank of the trajectory cause the strongest multipath/NLOS impacts.  
 3. **Solution robustness** is maintained despite aggressive weighting: PDOP never exceeds 3.5 thanks to prudent retention of partially blocked satellites.  
 
----
 
 ### 4.5  Limitations & Next Steps
 
@@ -168,7 +163,6 @@ ing the 3-D error by ≈45 m (1.1 %) relative to pure C/N₀ weighting.
 # Task 3 – Receiver Autonomous Integrity Monitoring (RAIM) for GPS  
 ## Position-Domain Integrity Assessment of an Open-Sky Data Set
 
----
 
 ## 1 Introduction  
 Receiver Autonomous Integrity Monitoring (RAIM) augments classical weighted least-squares (WLS) by statistically detecting and excluding faulty pseudorange measurements, then computing a Protection Level (PL) that bounds the true position error with a predefined missed-detection risk.  In this study we process 3 225 epochs of Open-Sky L1 C/A data, comparing:
@@ -178,7 +172,6 @@ Receiver Autonomous Integrity Monitoring (RAIM) augments classical weighted leas
 
 Key performance indicators include position error statistics, RAIM detection counts, and RMSE.
 
----
 
 ## 2 Data & Setup  
 
@@ -191,102 +184,107 @@ Key performance indicators include position error statistics, RAIM detection cou
 | Epochs processed                    | 3 225                    |
 | Initial seed position               | Known survey point       |
 
----
-
-Here is an English paraphrased version of your original content, maintaining full technical accuracy:
 
 ---
 
-## 3. Algorithmic Principles (Paraphrased)
+### 3.1 Linearised GPS Observation Model
 
-### 3.1 Linearized GPS Observation Model
+For each satellite *k* at epoch *i*:
 
-For each satellite \(k\) at time epoch \(i\), the pseudorange measurement is modeled as:
+$$
+\rho_k = \|s_k - x\| + c \cdot \Delta t_u - c \cdot \Delta t_{s,k} + \varepsilon_k, \quad \varepsilon_k \sim \mathcal{N}(0, \sigma^2)
+$$
 
-\[
-\rho_k = \|\mathbf{s}_k - \mathbf{x}\| + c\,\Delta t_u - c\,\Delta t_{s,k} + \varepsilon_k,
-\quad \varepsilon_k \sim \mathcal{N}(0, \sigma^2)
-\]
+- $s_k$: satellite ECEF position  
+- $x = [x, y, z]^T$: user position  
+- $c \cdot \Delta t_u$: receiver clock bias  
+- $c \cdot \Delta t_{s,k}$: satellite clock correction
 
-- \(\mathbf{s}_k\): satellite position in ECEF coordinates  
-- \(\mathbf{x} = [x, y, z]^T\): estimated user position  
-- \(c\,\Delta t_u\): receiver clock bias  
-- \(c\,\Delta t_{s,k}\): correction for satellite clock  
-- \(\varepsilon_k\): Gaussian measurement noise  
-
-Before computing residuals, delays from ionospheric and tropospheric effects are corrected using models.
+Ionospheric and tropospheric delays are corrected using models before forming residuals.
 
 ---
 
-### 3.2 Weighted Least Squares (WLS) Estimation
+### 3.2 Weighted Least-Squares (WLS)
 
-By linearizing the observation function around an initial position estimate \(\hat{\mathbf{x}}\), the residual vector is:
+Linearisation around estimated position $\hat{x}$ gives:
 
-\[
-\mathbf{r} = \mathbf{z} - \mathbf{h}(\hat{\mathbf{x}}) \approx \mathbf{H}\,\boldsymbol{\delta} + \boldsymbol{\varepsilon}
-\]
+$$
+r = z - h(\hat{x}) \approx H \cdot \delta + \varepsilon
+$$
 
-The weighting matrix is defined as:
+$$
+W = \text{diag}\left(\frac{1}{\sigma_k^2}\right)
+$$
 
-\[
-\mathbf{W} = \text{diag}\left(\frac{1}{\sigma_k^2}\right)
-\]
+$$
+\hat{\delta} = (H^T W H)^{-1} H^T W r
+$$
 
-The estimated position correction is:
+$$
+Q = (H^T W H)^{-1}
+$$
 
-\[
-\hat{\boldsymbol{\delta}} = (\mathbf{H}^T \mathbf{W} \mathbf{H})^{-1} \mathbf{H}^T \mathbf{W} \mathbf{r}
-\]
-
-The associated covariance matrix of the estimate is:
-
-\[
-\mathbf{Q} = (\mathbf{H}^T \mathbf{W} \mathbf{H})^{-1}
-\]
-
-- \(\mathbf{H}\): geometry matrix containing line-of-sight vectors and clock bias term  
-- \(\mathbf{Q}\): covariance matrix for the WLS position estimate
+- **H**: geometry matrix (line-of-sight unit vectors + clock-bias column)  
+- **Q**: WLS covariance matrix
 
 ---
 
-### 3.3 RAIM with Parity Space and Fault Detection
+### 3.3 Parity-Space RAIM & Fault Detection
 
-1. **Residual Sensitivity Matrix**  
-   \[
-   \mathbf{S} = \mathbf{I} - \mathbf{H} \mathbf{Q} \mathbf{H}^T \mathbf{W}
-   \]
+1. **Residual Sensitivity Matrix**
 
-2. **Global Test Statistic**  
-   \[
-   T = \mathbf{r}^T \mathbf{W} \mathbf{S} \mathbf{W} \mathbf{r} \sim \chi^2_{\nu},\quad \nu = m - 4
-   \]
+$$
+S = I - H Q H^T W
+$$
 
-3. **Decision Threshold**  
-   \[
-   T_{\text{th}} = (K_{\text{md}}\,\sigma)^2, \quad K_{\text{md}} = 5.33 \text{ for } P_{\text{md}} = 10^{-7}
-   \]
+2. **Global Test Statistic**
 
-4. **Iterative Fault Detection and Exclusion (FDE)**  
-   While \(T > T_{\text{th}}\):
-   - Identify and remove the measurement with the largest absolute residual \(|r_k|\)  
-   - Recalculate \(\mathbf{H}\), \(\mathbf{W}\), WLS solution, and test statistic \(T\)  
-   - If fewer than 4 satellites remain or PDOP exceeds 10, the epoch is discarded
+$$
+T = r^T W S W r \sim \chi^2_\nu, \quad \nu = m - 4
+$$
+
+3. **Threshold**
+
+$$
+T_{th} = (K_{md} \cdot \sigma)^2, \quad K_{md} = 5.33 \quad (P_{md} = 10^{-7})
+$$
+
+4. **Iterative FDE Procedure**
+
+While $T > T_{th}$:  
+- Find the measurement with the largest residual $|r_k|$  
+- Exclude the corresponding satellite  
+- Recompute $H$, $W$, WLS solution, and $T$  
+- Skip the epoch if $m < 4$ or PDOP > 10
 
 ---
 
-### 3.4 Three-Dimensional Protection Level (PL)
+### 3.4 3D Protection Level (PL)
 
-To assess position integrity, the protection level is:
+$$
+\lambda_{max} = \max \left( \text{eigenvalues of } Q_{xyz} \right)
+$$
 
-\[
-\lambda_{\max} = \max\left(\text{eig}(\mathbf{Q}_{xyz})\right), \quad \mathbf{Q}_{xyz} = \mathbf{Q}(1\!:\!3, 1\!:\!3)
-\]
+$$
+Q_{xyz} = Q_{1:3,1:3}
+$$
 
-\[
-\text{PL}_{3D} = K_{\text{md}}\,\sigma\,\sqrt{\lambda_{\max}}
-\]
+$$
+PL_{3D} = K_{md} \cdot \sqrt{\lambda_{max}} \cdot \sigma
+$$
 
-This ensures the probability of the true error exceeding the protection level is less than \(10^{-7}\).
+Where:
+- $K_{md} = 5.33$, for $P_{md} = 10^{-7}$  
+- $\lambda_{max}$ is the largest eigenvalue of the position submatrix  
+- $\sigma = 3$ m  
+
+This guarantees that the probability of the position error exceeding $PL_{3D}$ is less than $10^{-7}$:
+
+$$
+\Pr(\|\hat{x} - x\| > PL_{3D}) \le 10^{-7}
+$$
+
+---
 
 
 ## 4 Detection & Error Statistics  
@@ -310,7 +308,6 @@ This ensures the probability of the true error exceeding the protection level is
 | False-alarms            | n/a               | 2                 |
 | Mean PL                 | n/a               | 14.2 m            |
 
----
 
 ## 5 Results Visualization  
 
@@ -324,7 +321,6 @@ This ensures the probability of the true error exceeding the protection level is
 </p>
 <p align="center"><b>Fig. 8</b> Geographic Scatter of WLS (blue) vs. WLS+RAIM (green).</p>
 
----
 
 ## 6 Discussion  
 
@@ -342,8 +338,6 @@ This ensures the probability of the true error exceeding the protection level is
 
 4. **Protection Level Interpretation**  
    - Mean PL of 14.2 m is well below the alarm limit, indicating **over-protection**.  A tighter \(K_{\!md}\) or elevation-dependent σ could raise PL and enable more realistic fault flags.
-
----
 
 ## 7 Conclusions & Recommendations  
 
