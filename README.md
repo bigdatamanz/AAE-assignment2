@@ -78,12 +78,12 @@ Several downweighting factors (0.8, 0.5, 0.3, 0) were tested for blocked satelli
 ### 4.1  Satellite Visibility
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bigdatamanz/ceshi222/master/Figurenew/untitled6.png" width="300">
+  <img src="https://raw.githubusercontent.com/bigdatamanz/AAE-assignment2/master/Figure/untitled1.png" width="300">
 </p>
 <p align="center"><b>Fig. 1</b> Conventional sky-plot (all tracked GPS L1 satellites)</p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bigdatamanz/ceshi222/master/Figurenew/untitled6.png" width="300">
+  <img src="https://raw.githubusercontent.com/bigdatamanz/AAE-assignment2/master/Figure/untitled2.png" width="300">
 </p>
 <p align="center"><b>Fig. 2</b> Skymask-overlaid sky-plot; blocked azimuth/elevation sectors are shaded.</p>
 
@@ -97,7 +97,7 @@ This visibility classification underpins the weighting strategy in the subsequen
 ### 4.2  Positioning Accuracy
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bigdatamanz/ceshi222/master/Figurenew/untitled6.png" width="300">
+  <img src="https://raw.githubusercontent.com/bigdatamanz/AAE-assignment2/master/Figure/untitled3.png" width="300">
 </p>
 <p align="center"><b>Fig. 3</b> East–North error cloud for the baseline WLS (C/N₀ weighting only).</p>
 
@@ -119,7 +119,7 @@ ing the 3-D error by ≈45 m (1.1 %) relative to pure C/N₀ weighting.
 - Fully zeroing blocked satellites (0.0) produces a similar 3-D RMSE but risks satellite geometry losses in epochs with only four visible SVs.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bigdatamanz/ceshi222/master/Figurenew/untitled6.png" width="300">
+  <img src="https://raw.githubusercontent.com/bigdatamanz/AAE-assignment2/master/Figure/untitled4.png" width="300">
 </p>
 <p align="center"><b>Fig. 4</b> RMSE comparison for four weighting strategies.</p>
 
@@ -129,12 +129,12 @@ ing the 3-D error by ≈45 m (1.1 %) relative to pure C/N₀ weighting.
 ### 4.3  Temporal Stability
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bigdatamanz/ceshi222/master/Figurenew/untitled6.png" width="300">
+  <img src="https://raw.githubusercontent.com/bigdatamanz/AAE-assignment2/master/Figure/untitled5.png" width="300">
 </p>
 <p align="center"><b>Fig. 5</b> Coordinate deviations (East, North, Up) after skymask weighting.</p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bigdatamanz/ceshi222/master/Figurenew/untitled6.png" width="300">
+  <img src="https://raw.githubusercontent.com/bigdatamanz/AAE-assignment2/master/Figure/untitled6.png" width="300">
 </p>
 <p align="center"><b>Fig. 6</b> Estimated velocity components.</p>
 
@@ -193,79 +193,101 @@ Key performance indicators include position error statistics, RAIM detection cou
 
 ---
 
-## 3 Algorithmic Principles  
-
-### 3.1 Linearised GPS Observation Model  
-For each satellite *k* at epoch *i*:
-
-\[
-\rho_{k} \;=\; \|\mathbf{s}_{k}-\mathbf{x}\|\;+\;c\,\Delta t_u\;-\;c\,\Delta t_{s,k}
-\;+\;\varepsilon_{k},\quad
-\varepsilon_{k}\sim\mathcal{N}(0,\sigma^{2})
-\]
-
-– \(\mathbf{s}_{k}\): satellite ECEF position  
-– \(\mathbf{x}=[x,y,z]^T\): user position  
-– \(c\,\Delta t_u\): receiver clock bias  
-– \(c\,\Delta t_{s,k}\): satellite clock correction  
-
-Delayed terms (iono/tropo) are model-corrected before forming the residual vector.
-
-### 3.2 Weighted Least-Squares (WLS)  
-Linearisation about \(\hat{\mathbf{x}}\) yields:
-
-\[
-\mathbf{r}=\mathbf{z}-\mathbf{h}(\hat{\mathbf{x}})\approx\mathbf{H}\,\boldsymbol{\delta}+\boldsymbol{\varepsilon},\quad
-\mathbf{W}=\operatorname{diag}\Bigl(\tfrac{1}{\sigma_k^2}\Bigr)
-\]
-
-\[
-\hat{\boldsymbol{\delta}}=(\mathbf{H}^{T}\mathbf{W}\,\mathbf{H})^{-1}
-\mathbf{H}^{T}\mathbf{W}\,\mathbf{r},\quad
-\mathbf{Q}=(\mathbf{H}^{T}\mathbf{W}\,\mathbf{H})^{-1}
-\]
-
-– \(\mathbf{H}\) contains line-of-sight unit vectors and a clock-bias column.  
-– \(\mathbf{Q}\) is the WLS covariance matrix.
-
-### 3.3 Parity-Space RAIM & Fault-Detection  
-
-1. **Residual sensitivity matrix**  
-   \(\mathbf{S}=\mathbf{I}-\mathbf{H}\,\mathbf{Q}\,\mathbf{H}^{T}\,\mathbf{W}\)
-
-2. **Global test statistic**  
-   \[
-     T=\mathbf{r}^{T}\mathbf{W}\,\mathbf{S}\,\mathbf{W}\,\mathbf{r}
-     \;\sim\;\chi^2_{\nu}\quad(\nu=m-4)
-   \]
-
-3. **Threshold**  
-   \[
-     T_{\text{th}}=\bigl(K_{\!md}\,\sigma\bigr)^{2},\quad
-     K_{\!md}=5.33\quad(P_{\!md}=10^{-7})
-   \]
-
-4. **Iterative FDE**  
-   While \(T>T_{\text{th}}\):  
-   &nbsp;&nbsp;• Identify measurement with largest \(|r_k|\)  
-   &nbsp;&nbsp;• Exclude that satellite, rebuild \(\mathbf{H},\mathbf{W}\)  
-   &nbsp;&nbsp;• Recompute WLS, \(T\)  
-   Epoch is skipped if \(m<4\) or PDOP > 10.
-
-### 3.4 3-D Protection Level (PL)  
-
-\[
-\lambda_{\max}=\max\!\bigl[\mathrm{eig}(\mathbf{Q}_{xyz})\bigr],\quad
-\mathbf{Q}_{xyz}=\mathbf{Q}(1\!:\!3,1\!:\!3)
-\]
-
-\[
-\mathrm{PL}_{3D}=K_{\!md}\,\sigma\,\sqrt{\lambda_{\max}}
-\]
-
-This guarantees \(\Pr(\|\hat{\mathbf{x}}-\mathbf{x}\|>\mathrm{PL})\le10^{-7}\).
+Here is an English paraphrased version of your original content, maintaining full technical accuracy:
 
 ---
+
+## 3. Algorithmic Principles (Paraphrased)
+
+### 3.1 Linearized GPS Observation Model
+
+For each satellite \(k\) at time epoch \(i\), the pseudorange measurement is modeled as:
+
+\[
+\rho_k = \|\mathbf{s}_k - \mathbf{x}\| + c\,\Delta t_u - c\,\Delta t_{s,k} + \varepsilon_k,
+\quad \varepsilon_k \sim \mathcal{N}(0, \sigma^2)
+\]
+
+- \(\mathbf{s}_k\): satellite position in ECEF coordinates  
+- \(\mathbf{x} = [x, y, z]^T\): estimated user position  
+- \(c\,\Delta t_u\): receiver clock bias  
+- \(c\,\Delta t_{s,k}\): correction for satellite clock  
+- \(\varepsilon_k\): Gaussian measurement noise  
+
+Before computing residuals, delays from ionospheric and tropospheric effects are corrected using models.
+
+---
+
+### 3.2 Weighted Least Squares (WLS) Estimation
+
+By linearizing the observation function around an initial position estimate \(\hat{\mathbf{x}}\), the residual vector is:
+
+\[
+\mathbf{r} = \mathbf{z} - \mathbf{h}(\hat{\mathbf{x}}) \approx \mathbf{H}\,\boldsymbol{\delta} + \boldsymbol{\varepsilon}
+\]
+
+The weighting matrix is defined as:
+
+\[
+\mathbf{W} = \text{diag}\left(\frac{1}{\sigma_k^2}\right)
+\]
+
+The estimated position correction is:
+
+\[
+\hat{\boldsymbol{\delta}} = (\mathbf{H}^T \mathbf{W} \mathbf{H})^{-1} \mathbf{H}^T \mathbf{W} \mathbf{r}
+\]
+
+The associated covariance matrix of the estimate is:
+
+\[
+\mathbf{Q} = (\mathbf{H}^T \mathbf{W} \mathbf{H})^{-1}
+\]
+
+- \(\mathbf{H}\): geometry matrix containing line-of-sight vectors and clock bias term  
+- \(\mathbf{Q}\): covariance matrix for the WLS position estimate
+
+---
+
+### 3.3 RAIM with Parity Space and Fault Detection
+
+1. **Residual Sensitivity Matrix**  
+   \[
+   \mathbf{S} = \mathbf{I} - \mathbf{H} \mathbf{Q} \mathbf{H}^T \mathbf{W}
+   \]
+
+2. **Global Test Statistic**  
+   \[
+   T = \mathbf{r}^T \mathbf{W} \mathbf{S} \mathbf{W} \mathbf{r} \sim \chi^2_{\nu},\quad \nu = m - 4
+   \]
+
+3. **Decision Threshold**  
+   \[
+   T_{\text{th}} = (K_{\text{md}}\,\sigma)^2, \quad K_{\text{md}} = 5.33 \text{ for } P_{\text{md}} = 10^{-7}
+   \]
+
+4. **Iterative Fault Detection and Exclusion (FDE)**  
+   While \(T > T_{\text{th}}\):
+   - Identify and remove the measurement with the largest absolute residual \(|r_k|\)  
+   - Recalculate \(\mathbf{H}\), \(\mathbf{W}\), WLS solution, and test statistic \(T\)  
+   - If fewer than 4 satellites remain or PDOP exceeds 10, the epoch is discarded
+
+---
+
+### 3.4 Three-Dimensional Protection Level (PL)
+
+To assess position integrity, the protection level is:
+
+\[
+\lambda_{\max} = \max\left(\text{eig}(\mathbf{Q}_{xyz})\right), \quad \mathbf{Q}_{xyz} = \mathbf{Q}(1\!:\!3, 1\!:\!3)
+\]
+
+\[
+\text{PL}_{3D} = K_{\text{md}}\,\sigma\,\sqrt{\lambda_{\max}}
+\]
+
+This ensures the probability of the true error exceeding the protection level is less than \(10^{-7}\).
+
 
 ## 4 Detection & Error Statistics  
 
@@ -293,12 +315,12 @@ This guarantees \(\Pr(\|\hat{\mathbf{x}}-\mathbf{x}\|>\mathrm{PL})\le10^{-7}\).
 ## 5 Results Visualization  
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bigdatamanz/ceshi222/master/Figurenew/untitled6.png" width="300">
+  <img src="https://raw.githubusercontent.com/bigdatamanz/AAE-assignment2/master/Figure/untitled7.png" width="300">
 </p>
 <p align="center"><b>Fig. 7</b> Stanford Chart of Position Error vs. PL.</p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bigdatamanz/ceshi222/master/Figurenew/untitled6.png" width="300">
+  <img src="https://raw.githubusercontent.com/bigdatamanz/AAE-assignment2/master/Figure/untitled8.png" width="300">
 </p>
 <p align="center"><b>Fig. 8</b> Geographic Scatter of WLS (blue) vs. WLS+RAIM (green).</p>
 
@@ -307,7 +329,7 @@ This guarantees \(\Pr(\|\hat{\mathbf{x}}-\mathbf{x}\|>\mathrm{PL})\le10^{-7}\).
 ## 6 Discussion  
 
 1. **Integrity vs. Availability Trade-off**  
-   - The chosen threshold \(K_{\!md}=5.33\) virtually eliminates false alarms, but at the cost of failing to detect real faults (3 205 missed).  
+   - The chosen threshold virtually eliminates false alarms, but at the cost of failing to detect real faults (3 205 missed).  
    - Excluding satellites aggressively in low-multipath open-sky led to poor geometry (high PDOP), inflating RMSE to 711 m.
 
 2. **RMSE Inversion Paradox**  
@@ -336,7 +358,7 @@ This guarantees \(\Pr(\|\hat{\mathbf{x}}-\mathbf{x}\|>\mathrm{PL})\le10^{-7}\).
 With these refinements, RAIM can achieve both high integrity (low missed detections) and robust availability (low RMSE, realistic PL) in challenging environments.
 
 
-## Task 4 – LEO Satellites for Navigation [1]
+## Task 4 – LEO Satellites for Navigation 
 
 This essay discusses the difficulties and challenges of using **LEO communication satellites** for GNSS-style navigation, focusing on signal characteristics, orbital dynamics, coverage and visibility, and integration with existing GNSS infrastructure. Despite the promise, LEO-based navigation is non-trivial to implement.
 
